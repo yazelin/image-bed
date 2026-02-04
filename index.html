@@ -267,6 +267,44 @@
         .upload-item-status.success { color: #22c55e; }
         .upload-item-status.error { color: #ef4444; }
 
+        .upload-item-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .upload-item-actions button {
+            padding: 4px 10px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .upload-item-actions button:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .upload-item-actions button.copied {
+            background: #22c55e;
+            color: #fff;
+            border-color: #22c55e;
+        }
+
+        .upload-item-url {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            word-break: break-all;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* ========== Browse Section ========== */
         .browse-section {
             display: none;
@@ -1052,7 +1090,38 @@
             });
             await saveIndex();
 
-            setStatus(itemId, '完成', 'success');
+            // 顯示成功狀態和複製按鈕
+            const imageUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${assetName}`;
+            showUploadSuccess(itemId, file.name, imageUrl);
+        }
+
+        function showUploadSuccess(itemId, filename, url) {
+            const item = document.getElementById(itemId);
+            if (!item) return;
+
+            const mdCode = `![${filename}](${url})`;
+
+            item.innerHTML = `
+                <img class="upload-item-thumb" src="${url}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2212%22>IMG</text></svg>'">
+                <div class="upload-item-info">
+                    <div class="upload-item-name">${filename}</div>
+                    <div class="upload-item-status success">上傳成功</div>
+                    <div class="upload-item-actions">
+                        <button onclick="copyAndFeedback(this, '${url}')">複製連結</button>
+                        <button onclick="copyAndFeedback(this, '${mdCode.replace(/'/g, "\\'")}')">複製 MD</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyAndFeedback(btn, text) {
+            navigator.clipboard.writeText(text);
+            btn.textContent = '已複製';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = btn.textContent === '已複製' ? (text.startsWith('![') ? '複製 MD' : '複製連結') : btn.textContent;
+                btn.classList.remove('copied');
+            }, 1500);
         }
 
         async function ensureRelease() {
