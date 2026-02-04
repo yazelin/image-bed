@@ -1109,6 +1109,16 @@
         // ========== Load & Render ==========
         async function loadImages() {
             try {
+                // 優先從 GitHub raw 讀取（即時更新，避免 Pages 快取延遲）
+                if (settings.repo) {
+                    const rawUrl = `https://raw.githubusercontent.com/${settings.repo}/main/${CONFIG.INDEX_FILE}?t=${Date.now()}`;
+                    const res = await fetch(rawUrl);
+                    if (res.ok) {
+                        images = (await res.json()).images || [];
+                        return;
+                    }
+                }
+                // Fallback: 從當前頁面讀取
                 const res = await fetch(CONFIG.INDEX_FILE + '?t=' + Date.now());
                 if (res.ok) images = (await res.json()).images || [];
             } catch (e) {
