@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Bed - 個人圖床</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --bg-color: #f8fafc;
+        }
+        body {
+            background-color: var(--bg-color);
+            padding-top: 20px;
+            padding-bottom: 50px;
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 { margin: 0; font-size: 1.5rem; }
+
+        /* Tabs */
+        .nav-tabs .nav-link {
+            color: #64748b;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            background: transparent;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            background: white;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #f1f5f9;
+        }
+        .upload-area.dragover {
+            transform: scale(1.01);
+        }
+        .upload-icon {
+            font-size: 3rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        /* Folder Input */
+        .folder-input {
+            max-width: 300px;
+        }
+
+        /* Image Cards */
+        .card {
+            border: none;
+            transition: transform 0.2s;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        }
+        .img-container {
+            height: 150px;
+            overflow: hidden;
+            background: #f1f5f9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .img-preview {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .btn-xs {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* Tree Structure */
+        .folder-section { margin-bottom: 8px; }
+        .nested-content {
+            margin-left: 18px;
+            padding-left: 12px;
+            border-left: 2px solid #e2e8f0;
+            margin-top: 5px;
+        }
+
+        details > summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            min-width: 200px;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        details > summary:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        details > summary::marker { display: none; }
+        details > summary::before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            transition: transform 0.2s ease;
+        }
+        details[open] > summary::before { transform: rotate(90deg); }
+        details[open] > summary {
+            margin-bottom: 5px;
+            background-color: #f1f5f9;
+        }
+
+        /* Settings Panel */
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Upload Progress */
+        .upload-progress {
+            margin-top: 1rem;
+        }
+        .upload-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .upload-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 0.75rem;
+        }
+        .upload-item .filename {
+            flex: 1;
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .upload-item .status {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .upload-item .status.success { color: #10b981; }
+        .upload-item .status.error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header d-flex justify-content-between align-items-center">
+            <h1>🖼️ Image Bed</h1>
+            <div>
+                <button class="btn btn-sm btn-light" onclick="showSettings()">⚙️ 設定</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-tab="browse">📂 瀏覽圖片</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-tab="upload">📤 上傳圖片</a>
+            </li>
+        </ul>
+
+        <!-- Browse Tab -->
+        <div id="browseTab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="toggleAll(true)">全部展開</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleAll(false)">全部折疊</button>
+                </div>
+                <div class="text-muted small">
+                    共 <span id="totalCount">0</span> 張圖片
+                </div>
+            </div>
+            <div id="gallery"></div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="uploadTab" style="display: none;">
+            <!-- Token Warning -->
+            <div id="tokenWarning" class="alert alert-warning" style="display: none;">
+                ⚠️ 請先到「設定」頁面輸入 GitHub Token 才能上傳圖片
+            </div>
+
+            <!-- Folder Selection -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">📁 目標資料夾</label>
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control folder-input" id="uploadFolder"
+                           placeholder="例如: Blog/Tech" value="">
+                    <select class="form-select folder-input" id="folderSelect" onchange="selectFolder(this.value)">
+                        <option value="">-- 選擇現有資料夾 --</option>
+                    </select>
+                </div>
+                <div class="form-text">留空則放在根目錄</div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <h5>拖放圖片到這裡</h5>
+                <p class="text-muted mb-2">或點擊選擇檔案</p>
+                <p class="text-muted small">支援 JPG, PNG, GIF, WebP (單檔最大 2GB)</p>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" class="upload-progress"></div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal fade" id="settingsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">⚙️ 設定</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">GitHub Personal Access Token</label>
+                            <input type="password" class="form-control" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+                            <div class="form-text">
+                                需要 <code>repo</code> 權限。
+                                <a href="https://github.com/settings/tokens/new?scopes=repo&description=image-bed" target="_blank">點此建立 Token</a>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Repository</label>
+                            <input type="text" class="form-control" id="repoInput" placeholder="username/image-bed">
+                            <div class="form-text">格式: owner/repo</div>
+                        </div>
+                        <div class="alert alert-info small">
+                            💡 Token 只存在你的瀏覽器 localStorage，不會上傳到任何地方
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-danger" onclick="clearSettings()">清除設定</button>
+                        <button type="button" class="btn btn-primary" onclick="saveSettings()">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== Configuration ==========
+        const CONFIG = {
+            RELEASE_TAG: 'images',
+            INDEX_FILE: 'index.json'
+        };
+
+        // ========== State ==========
+        let images = [];
+        let settings = {
+            token: '',
+            repo: ''
+        };
+
+        // ========== Initialize ==========
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadSettings();
+            setupTabs();
+            setupDragDrop();
+            await loadImages();
+            renderGallery();
+            updateFolderSelect();
+            checkToken();
+        });
+
+        // ========== Settings ==========
+        function loadSettings() {
+            const saved = localStorage.getItem('image-bed-settings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                document.getElementById('tokenInput').value = settings.token || '';
+                document.getElementById('repoInput').value = settings.repo || '';
+            }
+
+            // Auto-detect repo from URL if on GitHub Pages
+            if (!settings.repo) {
+                const match = window.location.hostname.match(/^(.+)\.github\.io$/);
+                if (match) {
+                    const pathParts = window.location.pathname.split('/').filter(Boolean);
+                    if (pathParts.length > 0) {
+                        settings.repo = `${match[1]}/${pathParts[0]}`;
+                        document.getElementById('repoInput').value = settings.repo;
+                    }
+                }
+            }
+        }
+
+        function saveSettings() {
+            settings.token = document.getElementById('tokenInput').value.trim();
+            settings.repo = document.getElementById('repoInput').value.trim();
+            localStorage.setItem('image-bed-settings', JSON.stringify(settings));
+            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+            showToast('設定已儲存', 'success');
+            checkToken();
+        }
+
+        function clearSettings() {
+            localStorage.removeItem('image-bed-settings');
+            settings = { token: '', repo: '' };
+            document.getElementById('tokenInput').value = '';
+            document.getElementById('repoInput').value = '';
+            showToast('設定已清除', 'info');
+            checkToken();
+        }
+
+        function showSettings() {
+            new bootstrap.Modal(document.getElementById('settingsModal')).show();
+        }
+
+        function checkToken() {
+            const warning = document.getElementById('tokenWarning');
+            if (!settings.token || !settings.repo) {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        // ========== Tabs ==========
+        function setupTabs() {
+            document.querySelectorAll('[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabName = e.target.dataset.tab;
+
+                    document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    document.getElementById('browseTab').style.display = tabName === 'browse' ? 'block' : 'none';
+                    document.getElementById('uploadTab').style.display = tabName === 'upload' ? 'block' : 'none';
+                });
+            });
+        }
+
+        // ========== Drag & Drop ==========
+        function setupDragDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'));
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'));
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+        }
+
+        // ========== Load Images ==========
+        async function loadImages() {
+            try {
+                // Try to load from the same origin first
+                const response = await fetch(CONFIG.INDEX_FILE);
+                if (response.ok) {
+                    const data = await response.json();
+                    images = data.images || [];
+                }
+            } catch (err) {
+                console.log('No index.json found, starting fresh');
+                images = [];
+            }
+        }
+
+        // ========== Render Gallery ==========
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            document.getElementById('totalCount').textContent = images.length;
+
+            if (images.length === 0) {
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <h5>還沒有圖片</h5>
+                        <p>點擊「上傳圖片」開始使用</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Build tree structure
+            const tree = buildTree(images);
+            gallery.innerHTML = renderTree(tree, '');
+        }
+
+        function buildTree(images) {
+            const tree = { files: [], subdirs: {} };
+
+            images.forEach(img => {
+                const folder = img.folder || '';
+                if (!folder) {
+                    tree.files.push(img);
+                } else {
+                    const parts = folder.split('/');
+                    let current = tree;
+                    parts.forEach(part => {
+                        if (!current.subdirs[part]) {
+                            current.subdirs[part] = { files: [], subdirs: {} };
+                        }
+                        current = current.subdirs[part];
+                    });
+                    current.files.push(img);
+                }
+            });
+
+            return tree;
+        }
+
+        function countImages(node) {
+            let count = node.files.length;
+            for (const sub of Object.values(node.subdirs)) {
+                count += countImages(sub);
+            }
+            return count;
+        }
+
+        function renderTree(node, currentPath) {
+            let html = '';
+
+            // Render subdirectories first
+            const sortedDirs = Object.keys(node.subdirs).sort();
+            for (const dirname of sortedDirs) {
+                const subNode = node.subdirs[dirname];
+                const newPath = currentPath ? `${currentPath}/${dirname}` : dirname;
+                const totalImgs = countImages(subNode);
+
+                if (totalImgs > 0) {
+                    html += `
+                        <details class="folder-section" open>
+                            <summary>📁 ${dirname} <span class="badge rounded-pill bg-secondary ms-2">${totalImgs}</span></summary>
+                            <div class="nested-content">
+                                ${renderTree(subNode, newPath)}
+                            </div>
+                        </details>
+                    `;
+                }
+            }
+
+            // Render files
+            if (node.files.length > 0) {
+                html += '<div class="row g-3 mt-1 mb-3">';
+                for (const img of node.files) {
+                    const url = getImageUrl(img);
+                    const mdCode = `![${img.filename}](${url})`;
+                    html += `
+                        <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                            <div class="card h-100 shadow-sm">
+                                <div class="img-container" onclick="window.open('${url}')">
+                                    <img src="${url}" class="img-preview" alt="${img.filename}" loading="lazy">
+                                </div>
+                                <div class="card-body p-2">
+                                    <p class="card-text text-truncate small mb-2" title="${img.filename}">${img.filename}</p>
+                                    <div class="d-grid gap-1">
+                                        <button class="btn btn-xs btn-outline-primary" onclick="copyText('${url}', this)">複製連結</button>
+                                        <button class="btn btn-xs btn-outline-secondary" onclick="copyText('${mdCode.replace(/'/g, "\\'")}', this)">複製 MD</button>
+                                        <button class="btn btn-xs btn-outline-danger" onclick="deleteImage('${img.id}')">刪除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        function getImageUrl(img) {
+            if (!settings.repo) return '';
+            return `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${img.id}_${encodeURIComponent(img.filename)}`;
+        }
+
+        // ========== Folder Selection ==========
+        function updateFolderSelect() {
+            const select = document.getElementById('folderSelect');
+            const folders = new Set();
+
+            images.forEach(img => {
+                if (img.folder) {
+                    const parts = img.folder.split('/');
+                    let path = '';
+                    parts.forEach(part => {
+                        path = path ? `${path}/${part}` : part;
+                        folders.add(path);
+                    });
+                }
+            });
+
+            select.innerHTML = '<option value="">-- 選擇現有資料夾 --</option>';
+            [...folders].sort().forEach(folder => {
+                select.innerHTML += `<option value="${folder}">${folder}</option>`;
+            });
+        }
+
+        function selectFolder(value) {
+            document.getElementById('uploadFolder').value = value;
+        }
+
+        // ========== Upload ==========
+        async function handleFiles(files) {
+            if (!settings.token || !settings.repo) {
+                showToast('請先設定 GitHub Token 和 Repository', 'error');
+                showSettings();
+                return;
+            }
+
+            const folder = document.getElementById('uploadFolder').value.trim();
+            const progressContainer = document.getElementById('uploadProgress');
+            progressContainer.innerHTML = '';
+
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) {
+                    showToast(`${file.name} 不是圖片檔案`, 'error');
+                    continue;
+                }
+
+                const itemId = 'upload-' + Date.now() + Math.random().toString(36).substr(2, 9);
+                const previewUrl = URL.createObjectURL(file);
+
+                progressContainer.innerHTML += `
+                    <div class="upload-item" id="${itemId}">
+                        <img src="${previewUrl}" alt="">
+                        <span class="filename">${file.name}</span>
+                        <span class="status">上傳中...</span>
+                    </div>
+                `;
+
+                try {
+                    await uploadFile(file, folder, itemId);
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    updateUploadStatus(itemId, '失敗: ' + err.message, 'error');
+                }
+            }
+
+            // Refresh gallery
+            await loadImages();
+            renderGallery();
+            updateFolderSelect();
+        }
+
+        async function uploadFile(file, folder, itemId) {
+            const id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+            const assetName = `${id}_${file.name}`;
+
+            // 1. Ensure release exists
+            const releaseId = await ensureRelease();
+
+            // 2. Upload file as release asset
+            updateUploadStatus(itemId, '上傳檔案中...', '');
+
+            const uploadUrl = `https://uploads.github.com/repos/${settings.repo}/releases/${releaseId}/assets?name=${encodeURIComponent(assetName)}`;
+
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${settings.token}`,
+                    'Content-Type': file.type
+                },
+                body: file
+            });
+
+            if (!uploadRes.ok) {
+                const err = await uploadRes.json();
+                throw new Error(err.message || 'Upload failed');
+            }
+
+            // 3. Update index.json
+            updateUploadStatus(itemId, '更新索引中...', '');
+
+            const newImage = {
+                id,
+                filename: file.name,
+                folder: folder || '',
+                size: file.size,
+                uploadedAt: new Date().toISOString()
+            };
+
+            images.push(newImage);
+            await saveIndex();
+
+            updateUploadStatus(itemId, '完成 ✓', 'success');
+        }
+
+        async function ensureRelease() {
+            // Check if release exists
+            const res = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
+                headers: { 'Authorization': `token ${settings.token}` }
+            });
+
+            if (res.ok) {
+                const release = await res.json();
+                return release.id;
+            }
+
+            // Create release
+            const createRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${settings.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tag_name: CONFIG.RELEASE_TAG,
+                    name: 'Image Storage',
+                    body: 'Auto-created release for image storage'
+                })
+            });
+
+            if (!createRes.ok) {
+                throw new Error('Failed to create release');
+            }
+
+            const release = await createRes.json();
+            return release.id;
+        }
+
+        async function saveIndex() {
+            const content = JSON.stringify({ images }, null, 2);
+            const base64Content = btoa(unescape(encodeURIComponent(content)));
+
+            // Get current file SHA if exists
+            let sha = null;
+            try {
+                const res = await fetch(`https://api.github.com/repos/${settings.repo}/contents/${CONFIG.INDEX_FILE}`, {
+                    headers: { 'Authorization': `token ${settings.token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    sha = data.sha;
+                }
+            } catch (e) {}
+
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${settings.repo}/contents/${CONFIG.INDEX_FILE}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${settings.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Update image index',
+                    content: base64Content,
+                    ...(sha && { sha })
+                })
+            });
+
+            if (!updateRes.ok) {
+                throw new Error('Failed to update index');
+            }
+        }
+
+        function updateUploadStatus(itemId, text, status) {
+            const item = document.getElementById(itemId);
+            if (item) {
+                const statusEl = item.querySelector('.status');
+                statusEl.textContent = text;
+                statusEl.className = 'status ' + status;
+            }
+        }
+
+        // ========== Delete ==========
+        async function deleteImage(id) {
+            if (!confirm('確定要刪除這張圖片嗎？')) return;
+            if (!settings.token || !settings.repo) {
+                showToast('請先設定 GitHub Token', 'error');
+                return;
+            }
+
+            try {
+                const img = images.find(i => i.id === id);
+                if (!img) return;
+
+                // 1. Delete release asset
+                const releaseRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
+                    headers: { 'Authorization': `token ${settings.token}` }
+                });
+
+                if (releaseRes.ok) {
+                    const release = await releaseRes.json();
+                    const assetName = `${img.id}_${img.filename}`;
+                    const asset = release.assets.find(a => a.name === assetName);
+
+                    if (asset) {
+                        await fetch(`https://api.github.com/repos/${settings.repo}/releases/assets/${asset.id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `token ${settings.token}` }
+                        });
+                    }
+                }
+
+                // 2. Update index
+                images = images.filter(i => i.id !== id);
+                await saveIndex();
+
+                showToast('圖片已刪除', 'success');
+                renderGallery();
+                updateFolderSelect();
+            } catch (err) {
+                console.error('Delete error:', err);
+                showToast('刪除失敗: ' + err.message, 'error');
+            }
+        }
+
+        // ========== Utilities ==========
+        function toggleAll(expand) {
+            document.querySelectorAll('details').forEach(d => {
+                if (expand) d.setAttribute('open', '');
+                else d.removeAttribute('open');
+            });
+        }
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = '已複製 ✓';
+                btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+                btn.classList.add('btn-success');
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('btn-success');
+                    if (originalText.includes('MD')) {
+                        btn.classList.add('btn-outline-secondary');
+                    } else {
+                        btn.classList.add('btn-outline-primary');
+                    }
+                }, 1500);
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.querySelector('.toast-container');
+            const id = 'toast-' + Date.now();
+
+            const bgClass = {
+                'success': 'bg-success',
+                'error': 'bg-danger',
+                'info': 'bg-primary'
+            }[type] || 'bg-primary';
+
+            container.innerHTML += `
+                <div id="${id}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+            const toastEl = document.getElementById(id);
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toast.show();
+
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        }
+    </script>
+</body>
+</html>
