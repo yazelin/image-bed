@@ -875,7 +875,8 @@
         const CONFIG = {
             RELEASE_TAG: 'images',
             INDEX_FILE: 'index.json',
-            UPLOAD_PROXY: 'https://shorturl.yazelinj303.workers.dev/api/upload-release'
+            UPLOAD_PROXY: 'https://shorturl.yazelinj303.workers.dev/api/upload-release',
+            DELETE_PROXY: 'https://shorturl.yazelinj303.workers.dev/api/delete-asset'
         };
 
         // ========== State ==========
@@ -1304,13 +1305,13 @@
                 const asset = release.assets.find(a => a.name === assetName);
 
                 if (asset) {
-                    const deleteRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/assets/${asset.id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `token ${settings.token}` }
-                    });
+                    // 透過 Worker 代理刪除（繞過 CORS）
+                    const deleteUrl = `${CONFIG.DELETE_PROXY}?repo=${encodeURIComponent(settings.repo)}&assetId=${asset.id}&token=${encodeURIComponent(settings.token)}`;
+                    const deleteRes = await fetch(deleteUrl, { method: 'DELETE' });
 
-                    if (!deleteRes.ok && deleteRes.status !== 204) {
-                        console.error('Failed to delete asset:', deleteRes.status);
+                    if (!deleteRes.ok) {
+                        const errData = await deleteRes.json().catch(() => ({}));
+                        console.error('Failed to delete asset:', errData);
                         // Continue anyway to update index
                     }
                 } else {
