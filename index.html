@@ -1411,18 +1411,11 @@
                 const release = await releaseRes.json();
                 const assetName = `${img.id}_${img.filename}`;
 
-                // Debug
-                console.log('Looking for:', assetName);
-                console.log('Release assets:', release.assets?.map(a => a.name) || 'none');
-
                 // 嘗試精確匹配，失敗則嘗試以 id 開頭匹配
                 let asset = release.assets.find(a => a.name === assetName);
                 if (!asset) {
                     // 嘗試找以 id_ 開頭的 asset（處理檔名編碼差異）
                     asset = release.assets.find(a => a.name.startsWith(img.id + '_'));
-                    if (asset) {
-                        console.log('Found by id prefix:', asset.name);
-                    }
                 }
 
                 let assetDeleted = false;
