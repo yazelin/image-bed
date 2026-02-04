@@ -1275,28 +1275,47 @@
 
         async function deleteImage(id) {
             if (!confirm('確定要刪除嗎？')) return;
-            if (!settings.token) {
-                toast('請先設定 Token', 'error');
+            if (!settings.token || !settings.repo) {
+                toast('請先設定 Token 和 Repository', 'error');
                 return;
             }
 
             try {
                 const img = images.find(i => i.id === id);
-                if (!img) return;
+                if (!img) {
+                    toast('找不到圖片', 'error');
+                    return;
+                }
 
-                // Delete asset
+                toast('刪除中...', 'info');
+
+                // Delete asset from release
                 const releaseRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
                     headers: { 'Authorization': `token ${settings.token}` }
                 });
-                if (releaseRes.ok) {
-                    const release = await releaseRes.json();
-                    const asset = release.assets.find(a => a.name === `${img.id}_${img.filename}`);
-                    if (asset) {
-                        await fetch(`https://api.github.com/repos/${settings.repo}/releases/assets/${asset.id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `token ${settings.token}` }
-                        });
+
+                if (!releaseRes.ok) {
+                    console.error('Failed to get release:', releaseRes.status);
+                    throw new Error('無法取得 Release 資訊');
+                }
+
+                const release = await releaseRes.json();
+                const assetName = `${img.id}_${img.filename}`;
+                const asset = release.assets.find(a => a.name === assetName);
+
+                if (asset) {
+                    const deleteRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/assets/${asset.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `token ${settings.token}` }
+                    });
+
+                    if (!deleteRes.ok && deleteRes.status !== 204) {
+                        console.error('Failed to delete asset:', deleteRes.status);
+                        // Continue anyway to update index
                     }
+                } else {
+                    console.warn('Asset not found in release:', assetName);
+                    // Continue anyway to update index
                 }
 
                 // Update index
@@ -1306,7 +1325,8 @@
                 toast('已刪除', 'success');
                 render();
             } catch (err) {
-                toast('刪除失敗', 'error');
+                console.error('Delete error:', err);
+                toast('刪除失敗: ' + err.message, 'error');
             }
         }
 
