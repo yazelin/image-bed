@@ -874,7 +874,8 @@
         // ========== Config ==========
         const CONFIG = {
             RELEASE_TAG: 'images',
-            INDEX_FILE: 'index.json'
+            INDEX_FILE: 'index.json',
+            UPLOAD_PROXY: 'https://shorturl.yazelinj303.workers.dev/api/upload-release'
         };
 
         // ========== State ==========
@@ -1020,19 +1021,21 @@
             // Ensure release
             const releaseId = await ensureRelease();
 
-            // Upload
+            // Upload via Worker proxy (繞過 CORS)
             setStatus(itemId, '上傳中...');
-            const uploadUrl = `https://uploads.github.com/repos/${settings.repo}/releases/${releaseId}/assets?name=${encodeURIComponent(assetName)}`;
+            const uploadUrl = `${CONFIG.UPLOAD_PROXY}?repo=${encodeURIComponent(settings.repo)}&releaseId=${releaseId}&filename=${encodeURIComponent(assetName)}&token=${encodeURIComponent(settings.token)}`;
             const res = await fetch(uploadUrl, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `token ${settings.token}`,
                     'Content-Type': file.type
                 },
                 body: file
             });
 
-            if (!res.ok) throw new Error((await res.json()).message || 'Upload failed');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || errData.message || 'Upload failed');
+            }
 
             // Update index
             setStatus(itemId, '更新索引...');
