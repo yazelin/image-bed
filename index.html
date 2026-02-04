@@ -1250,12 +1250,13 @@
                 }
             }
 
-            // 2. 嘗試從 Release 的 index.json 讀取（主要來源）
+            // 2. 嘗試從 Release 的 index.json 讀取（透過 Worker proxy 繞過 CORS）
             if (settings.repo) {
-                const releaseIndexUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${CONFIG.INDEX_FILE}?t=${Date.now()}`;
-                console.log('Fetching Release index.json:', releaseIndexUrl);
+                const releaseIndexUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${CONFIG.INDEX_FILE}`;
+                const proxyUrl = `${CONFIG.UPLOAD_PROXY.replace('/api/upload-release', '/api/proxy')}?url=${encodeURIComponent(releaseIndexUrl)}`;
+                console.log('Fetching Release index.json via proxy:', proxyUrl);
                 try {
-                    const res = await fetch(releaseIndexUrl);
+                    const res = await fetch(proxyUrl);
                     console.log('Release fetch status:', res.status);
                     if (res.ok) {
                         const data = await res.json();
