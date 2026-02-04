@@ -1011,8 +1011,9 @@
                 }
             }
 
-            await loadImages();
+            // 直接渲染，不重新讀取（避免 GitHub 快取延遲）
             render();
+            updateFolderSelect();
         }
 
         async function uploadFile(file, folder, itemId) {
@@ -1040,10 +1041,12 @@
 
             // Update index
             setStatus(itemId, '更新索引...');
+            // 清理 folder（移除首尾斜線）
+            const cleanFolder = (folder || '').replace(/^\/+|\/+$/g, '').trim();
             images.push({
                 id,
                 filename: file.name,
-                folder: folder || '',
+                folder: cleanFolder,
                 size: file.size,
                 uploadedAt: new Date().toISOString()
             });
@@ -1154,12 +1157,14 @@
         function buildTree() {
             const tree = { files: [], subdirs: {} };
             images.forEach(img => {
-                const folder = img.folder || '';
+                // 清理 folder 路徑（移除首尾斜線、空白）
+                const folder = (img.folder || '').replace(/^\/+|\/+$/g, '').trim();
                 if (!folder) {
                     tree.files.push(img);
                 } else {
                     let current = tree;
-                    folder.split('/').forEach(part => {
+                    // filter(Boolean) 過濾掉空字串
+                    folder.split('/').filter(Boolean).forEach(part => {
                         if (!current.subdirs[part]) current.subdirs[part] = { files: [], subdirs: {} };
                         current = current.subdirs[part];
                     });
@@ -1253,7 +1258,9 @@
             images.forEach(img => {
                 if (img.folder) {
                     let path = '';
-                    img.folder.split('/').forEach(part => {
+                    // 清理並過濾空字串
+                    const cleanFolder = (img.folder || '').replace(/^\/+|\/+$/g, '').trim();
+                    cleanFolder.split('/').filter(Boolean).forEach(part => {
                         path = path ? `${path}/${part}` : part;
                         folders.add(path);
                     });
