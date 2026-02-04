@@ -1148,57 +1148,9 @@
             return (await create.json()).id;
         }
 
+        // 存 index.json 到 Repo
         async function saveIndex() {
             const jsonContent = JSON.stringify({ images }, null, 2);
-
-            // 1. 存到 Release（主要，即時生效）
-            await saveIndexToRelease(jsonContent);
-
-            // 2. 背景存到 Repo（備份）
-            saveIndexToRepo(jsonContent).catch(e => {
-                console.warn('Failed to save index to repo:', e);
-            });
-        }
-
-        // 存 index.json 到 Release（DELETE + POST）
-        async function saveIndexToRelease(jsonContent) {
-            // 取得 Release 資訊
-            const releaseRes = await fetch(
-                `https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`,
-                { headers: { 'Authorization': `token ${settings.token}` } }
-            );
-
-            if (!releaseRes.ok) {
-                throw new Error('Release not found');
-            }
-
-            const release = await releaseRes.json();
-            const releaseId = release.id;
-
-            // 找到舊的 index.json asset
-            const oldAsset = release.assets.find(a => a.name === CONFIG.INDEX_FILE);
-
-            // 刪除舊的（如果存在）
-            if (oldAsset) {
-                const deleteUrl = `${CONFIG.DELETE_PROXY}?repo=${encodeURIComponent(settings.repo)}&assetId=${oldAsset.id}&token=${encodeURIComponent(settings.token)}`;
-                await fetch(deleteUrl, { method: 'DELETE' });
-            }
-
-            // 上傳新的
-            const uploadUrl = `${CONFIG.UPLOAD_PROXY}?repo=${encodeURIComponent(settings.repo)}&releaseId=${releaseId}&filename=${CONFIG.INDEX_FILE}&token=${encodeURIComponent(settings.token)}`;
-            const uploadRes = await fetch(uploadUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: jsonContent
-            });
-
-            if (!uploadRes.ok) {
-                throw new Error('Failed to upload index.json to Release');
-            }
-        }
-
-        // 存 index.json 到 Repo（備份）
-        async function saveIndexToRepo(jsonContent) {
             const content = btoa(unescape(encodeURIComponent(jsonContent)));
             let sha = null;
 
@@ -1233,47 +1185,16 @@
 
         // ========== Load & Render ==========
         async function loadImages() {
-            console.log('=== LOAD DEBUG ===');
-            console.log('settings.repo:', settings.repo);
-            console.log('settings.token:', settings.token ? '已設定' : '未設定');
-
             // 1. 先從 localStorage 讀取（即時顯示）
             const cached = localStorage.getItem('image-bed-images');
-            console.log('localStorage cached:', cached);
             if (cached) {
                 try {
                     images = JSON.parse(cached) || [];
-                    console.log('Loaded from localStorage:', images.length, 'images');
                     render();
-                } catch (e) {
-                    console.error('Failed to parse localStorage:', e);
-                }
+                } catch (e) {}
             }
 
-            // 2. 嘗試從 Release 的 index.json 讀取（透過 Worker proxy 繞過 CORS）
-            if (settings.repo) {
-                const releaseIndexUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${CONFIG.INDEX_FILE}`;
-                const proxyUrl = `${CONFIG.UPLOAD_PROXY.replace('/api/upload-release', '/api/proxy')}?url=${encodeURIComponent(releaseIndexUrl)}`;
-                console.log('Fetching Release index.json via proxy:', proxyUrl);
-                try {
-                    const res = await fetch(proxyUrl);
-                    console.log('Release fetch status:', res.status);
-                    if (res.ok) {
-                        const data = await res.json();
-                        console.log('Release index.json data:', data);
-                        images = data.images || [];
-                        saveImagesToCache();
-                        render();
-                        return;
-                    }
-                } catch (e) {
-                    console.warn('Failed to load from Release index.json:', e);
-                }
-            } else {
-                console.log('No repo configured, skipping Release fetch');
-            }
-
-            // 3. Fallback: 從 repo 的 index.json 讀取
+            // 2. 從 repo 的 index.json 讀取
             try {
                 if (settings.repo) {
                     const rawUrl = `https://raw.githubusercontent.com/${settings.repo}/main/${CONFIG.INDEX_FILE}?t=${Date.now()}`;
@@ -1489,13 +1410,6 @@
 
                 const release = await releaseRes.json();
                 const assetName = `${img.id}_${img.filename}`;
-
-                // Debug: 列出所有 assets 方便比對
-                console.log('=== DELETE DEBUG ===');
-                console.log('Looking for:', assetName);
-                console.log('Available assets:', release.assets.map(a => a.name));
-                console.log('Assets count:', release.assets.length);
-                console.log('Full release data:', release);
 
                 // 嘗試精確匹配，失敗則嘗試以 id 開頭匹配
                 let asset = release.assets.find(a => a.name === assetName);
