@@ -429,7 +429,7 @@
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid #eee;
-            transition: all 0.2s;
+            transition: all 0.2s, opacity 0.3s;
         }
 
         .image-card:hover {
@@ -920,6 +920,7 @@
         // ========== State ==========
         let images = [];
         let settings = { token: '', repo: '' };
+        let deletingIds = new Set();  // 追蹤正在刪除的圖片
 
         // ========== Init ==========
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1088,7 +1089,8 @@
                 size: file.size,
                 uploadedAt: new Date().toISOString()
             });
-            await saveIndex();
+            saveImagesToCache();  // 立即存到 localStorage
+            await saveIndex();  // 存到 Release + Repo
 
             // 顯示成功狀態和複製按鈕
             const imageUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${assetName}`;
@@ -1147,7 +1149,57 @@
         }
 
         async function saveIndex() {
-            const content = btoa(unescape(encodeURIComponent(JSON.stringify({ images }, null, 2))));
+            const jsonContent = JSON.stringify({ images }, null, 2);
+
+            // 1. 存到 Release（主要，即時生效）
+            await saveIndexToRelease(jsonContent);
+
+            // 2. 背景存到 Repo（備份）
+            saveIndexToRepo(jsonContent).catch(e => {
+                console.warn('Failed to save index to repo:', e);
+            });
+        }
+
+        // 存 index.json 到 Release（DELETE + POST）
+        async function saveIndexToRelease(jsonContent) {
+            // 取得 Release 資訊
+            const releaseRes = await fetch(
+                `https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`,
+                { headers: { 'Authorization': `token ${settings.token}` } }
+            );
+
+            if (!releaseRes.ok) {
+                throw new Error('Release not found');
+            }
+
+            const release = await releaseRes.json();
+            const releaseId = release.id;
+
+            // 找到舊的 index.json asset
+            const oldAsset = release.assets.find(a => a.name === CONFIG.INDEX_FILE);
+
+            // 刪除舊的（如果存在）
+            if (oldAsset) {
+                const deleteUrl = `${CONFIG.DELETE_PROXY}?repo=${encodeURIComponent(settings.repo)}&assetId=${oldAsset.id}&token=${encodeURIComponent(settings.token)}`;
+                await fetch(deleteUrl, { method: 'DELETE' });
+            }
+
+            // 上傳新的
+            const uploadUrl = `${CONFIG.UPLOAD_PROXY}?repo=${encodeURIComponent(settings.repo)}&releaseId=${releaseId}&filename=${CONFIG.INDEX_FILE}&token=${encodeURIComponent(settings.token)}`;
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonContent
+            });
+
+            if (!uploadRes.ok) {
+                throw new Error('Failed to upload index.json to Release');
+            }
+        }
+
+        // 存 index.json 到 Repo（備份）
+        async function saveIndexToRepo(jsonContent) {
+            const content = btoa(unescape(encodeURIComponent(jsonContent)));
             let sha = null;
 
             try {
@@ -1181,22 +1233,71 @@
 
         // ========== Load & Render ==========
         async function loadImages() {
+            console.log('=== LOAD DEBUG ===');
+            console.log('settings.repo:', settings.repo);
+            console.log('settings.token:', settings.token ? '已設定' : '未設定');
+
+            // 1. 先從 localStorage 讀取（即時顯示）
+            const cached = localStorage.getItem('image-bed-images');
+            console.log('localStorage cached:', cached);
+            if (cached) {
+                try {
+                    images = JSON.parse(cached) || [];
+                    console.log('Loaded from localStorage:', images.length, 'images');
+                    render();
+                } catch (e) {
+                    console.error('Failed to parse localStorage:', e);
+                }
+            }
+
+            // 2. 嘗試從 Release 的 index.json 讀取（主要來源）
+            if (settings.repo) {
+                const releaseIndexUrl = `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${CONFIG.INDEX_FILE}?t=${Date.now()}`;
+                console.log('Fetching Release index.json:', releaseIndexUrl);
+                try {
+                    const res = await fetch(releaseIndexUrl);
+                    console.log('Release fetch status:', res.status);
+                    if (res.ok) {
+                        const data = await res.json();
+                        console.log('Release index.json data:', data);
+                        images = data.images || [];
+                        saveImagesToCache();
+                        render();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load from Release index.json:', e);
+                }
+            } else {
+                console.log('No repo configured, skipping Release fetch');
+            }
+
+            // 3. Fallback: 從 repo 的 index.json 讀取
             try {
-                // 優先從 GitHub raw 讀取（即時更新，避免 Pages 快取延遲）
                 if (settings.repo) {
                     const rawUrl = `https://raw.githubusercontent.com/${settings.repo}/main/${CONFIG.INDEX_FILE}?t=${Date.now()}`;
                     const res = await fetch(rawUrl);
                     if (res.ok) {
                         images = (await res.json()).images || [];
+                        saveImagesToCache();
+                        render();
                         return;
                     }
                 }
-                // Fallback: 從當前頁面讀取
+                // 最後嘗試從當前頁面讀取
                 const res = await fetch(CONFIG.INDEX_FILE + '?t=' + Date.now());
-                if (res.ok) images = (await res.json()).images || [];
+                if (res.ok) {
+                    images = (await res.json()).images || [];
+                    saveImagesToCache();
+                    render();
+                }
             } catch (e) {
-                images = [];
+                console.warn('Failed to load from repo:', e);
             }
+        }
+
+        function saveImagesToCache() {
+            localStorage.setItem('image-bed-images', JSON.stringify(images));
         }
 
         function render() {
@@ -1280,7 +1381,7 @@
                 node.files.forEach(img => {
                     const url = getImageUrl(img);
                     html += `
-                        <div class="image-card">
+                        <div class="image-card" data-image-id="${img.id}">
                             <div class="image-thumb" onclick="window.open('${url}')">
                                 <img src="${url}" alt="${img.filename}" loading="lazy">
                                 <div class="image-overlay">
@@ -1351,59 +1452,99 @@
         }
 
         async function deleteImage(id) {
+            // 防止重複點擊
+            if (deletingIds.has(id)) return;
+
             if (!confirm('確定要刪除嗎？')) return;
             if (!settings.token || !settings.repo) {
                 toast('請先設定 Token 和 Repository', 'error');
                 return;
             }
 
+            const img = images.find(i => i.id === id);
+            if (!img) {
+                toast('找不到圖片', 'error');
+                return;
+            }
+
+            // 標記為刪除中 + 立即視覺反饋
+            deletingIds.add(id);
+            const card = document.querySelector(`[data-image-id="${id}"]`);
+            if (card) {
+                card.style.opacity = '0.4';
+                card.style.pointerEvents = 'none';
+            }
+            toast('刪除中...', 'info');
+
             try {
-                const img = images.find(i => i.id === id);
-                if (!img) {
-                    toast('找不到圖片', 'error');
-                    return;
-                }
-
-                toast('刪除中...', 'info');
-
                 // Delete asset from release
                 const releaseRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
                     headers: { 'Authorization': `token ${settings.token}` }
                 });
 
                 if (!releaseRes.ok) {
-                    console.error('Failed to get release:', releaseRes.status);
                     throw new Error('無法取得 Release 資訊');
                 }
 
                 const release = await releaseRes.json();
                 const assetName = `${img.id}_${img.filename}`;
-                const asset = release.assets.find(a => a.name === assetName);
 
+                // Debug: 列出所有 assets 方便比對
+                console.log('=== DELETE DEBUG ===');
+                console.log('Looking for:', assetName);
+                console.log('Available assets:', release.assets.map(a => a.name));
+                console.log('Assets count:', release.assets.length);
+                console.log('Full release data:', release);
+
+                // 嘗試精確匹配，失敗則嘗試以 id 開頭匹配
+                let asset = release.assets.find(a => a.name === assetName);
+                if (!asset) {
+                    // 嘗試找以 id_ 開頭的 asset（處理檔名編碼差異）
+                    asset = release.assets.find(a => a.name.startsWith(img.id + '_'));
+                    if (asset) {
+                        console.log('Found by id prefix:', asset.name);
+                    }
+                }
+
+                let assetDeleted = false;
                 if (asset) {
                     // 透過 Worker 代理刪除（繞過 CORS）
                     const deleteUrl = `${CONFIG.DELETE_PROXY}?repo=${encodeURIComponent(settings.repo)}&assetId=${asset.id}&token=${encodeURIComponent(settings.token)}`;
                     const deleteRes = await fetch(deleteUrl, { method: 'DELETE' });
+                    assetDeleted = deleteRes.ok;
 
                     if (!deleteRes.ok) {
                         const errData = await deleteRes.json().catch(() => ({}));
                         console.error('Failed to delete asset:', errData);
-                        // Continue anyway to update index
                     }
                 } else {
+                    // Asset 真的不存在
                     console.warn('Asset not found in release:', assetName);
-                    // Continue anyway to update index
+                    // 不再視為成功，而是警告用戶
+                    toast('警告：Release 中找不到此檔案，僅更新索引', 'error');
+                    assetDeleted = true;  // 仍然更新 index 以清理
                 }
 
-                // Update index
-                images = images.filter(i => i.id !== id);
-                await saveIndex();
-
-                toast('已刪除', 'success');
-                render();
+                // 只有 Release 刪除成功才更新 index
+                if (assetDeleted) {
+                    images = images.filter(i => i.id !== id);
+                    saveImagesToCache();  // 立即存到 localStorage
+                    await saveIndex();  // 存到 Release + Repo
+                    toast('已刪除', 'success');
+                    render();
+                } else {
+                    throw new Error('無法刪除 Release 檔案');
+                }
             } catch (err) {
                 console.error('Delete error:', err);
+                // 恢復視覺狀態
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
                 toast('刪除失敗: ' + err.message, 'error');
+            } finally {
+                deletingIds.delete(id);
             }
         }
 
