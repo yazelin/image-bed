@@ -3,314 +3,875 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Bed - 個人圖床</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Image Bed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --bg-color: #f8fafc;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
         body {
-            background-color: var(--bg-color);
-            padding-top: 20px;
-            padding-bottom: 50px;
-            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.5;
+            min-height: 100vh;
         }
 
-        /* Header */
+        /* ========== Header ========== */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .header h1 { margin: 0; font-size: 1.5rem; }
 
-        /* Tabs */
-        .nav-tabs .nav-link {
-            color: #64748b;
-            border: none;
-            padding: 0.75rem 1.5rem;
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            font-size: 14px;
             font-weight: 500;
-        }
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            background: transparent;
-        }
-
-        /* Upload Area */
-        .upload-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 3rem;
-            text-align: center;
-            background: white;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .upload-area:hover, .upload-area.dragover {
-            border-color: var(--primary-color);
-            background: #f1f5f9;
-        }
-        .upload-area.dragover {
-            transform: scale(1.01);
-        }
-        .upload-icon {
-            font-size: 3rem;
-            color: #94a3b8;
-            margin-bottom: 1rem;
-        }
-
-        /* Folder Input */
-        .folder-input {
-            max-width: 300px;
-        }
-
-        /* Image Cards */
-        .card {
             border: none;
-            transition: transform 0.2s;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-        }
-        .img-container {
-            height: 150px;
-            overflow: hidden;
-            background: #f1f5f9;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.15s;
+            background: transparent;
+            color: #666;
+        }
+
+        .nav-btn:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+
+        .nav-btn.active {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .nav-btn.active:hover {
+            background: #333;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #666;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .img-preview {
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-        }
-        .btn-xs {
-            padding: 0.2rem 0.5rem;
-            font-size: 0.75rem;
+
+        .btn-icon:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
         }
 
-        /* Tree Structure */
-        .folder-section { margin-bottom: 8px; }
-        .nested-content {
-            margin-left: 18px;
-            padding-left: 12px;
-            border-left: 2px solid #e2e8f0;
-            margin-top: 5px;
+        /* ========== Main ========== */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
         }
 
-        details > summary {
-            list-style: none;
-            cursor: pointer;
-            padding: 8px 12px;
-            background: #fff;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
+        /* ========== Upload Section ========== */
+        .upload-section {
+            display: none;
+        }
+
+        .upload-section.active {
+            display: block;
+        }
+
+        .upload-header {
+            margin-bottom: 24px;
+        }
+
+        .upload-header h2 {
+            font-size: 24px;
             font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            min-width: 200px;
-            user-select: none;
+            margin-bottom: 8px;
+        }
+
+        .upload-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-config {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .config-field {
+            flex: 1;
+        }
+
+        .config-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .config-field input,
+        .config-field select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            transition: border-color 0.15s;
+        }
+
+        .config-field input:focus,
+        .config-field select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        .upload-zone {
+            background: #fff;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
             transition: all 0.2s;
         }
-        details > summary:hover {
-            background-color: #f1f5f9;
-            border-color: #cbd5e1;
-        }
-        details > summary::marker { display: none; }
-        details > summary::before {
-            content: '▶';
-            display: inline-block;
-            margin-right: 8px;
-            font-size: 0.7rem;
-            color: #94a3b8;
-            transition: transform 0.2s ease;
-        }
-        details[open] > summary::before { transform: rotate(90deg); }
-        details[open] > summary {
-            margin-bottom: 5px;
-            background-color: #f1f5f9;
+
+        .upload-zone:hover {
+            border-color: #999;
+            background: #fafafa;
         }
 
-        /* Settings Panel */
-        .settings-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .upload-zone.dragover {
+            border-color: #1a1a1a;
+            background: #f5f5f5;
         }
 
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
+        .upload-zone-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: #999;
         }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #94a3b8;
-        }
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+        .upload-zone h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
         }
 
-        /* Upload Progress */
-        .upload-progress {
-            margin-top: 1rem;
+        .upload-zone p {
+            font-size: 14px;
+            color: #999;
         }
+
+        .upload-list {
+            margin-top: 20px;
+        }
+
         .upload-item {
             display: flex;
             align-items: center;
-            padding: 0.5rem;
-            background: #f8fafc;
+            gap: 12px;
+            padding: 12px;
+            background: #fff;
             border-radius: 8px;
-            margin-bottom: 0.5rem;
+            margin-bottom: 8px;
+            border: 1px solid #eee;
         }
-        .upload-item img {
-            width: 40px;
-            height: 40px;
+
+        .upload-item-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 6px;
             object-fit: cover;
-            border-radius: 4px;
-            margin-right: 0.75rem;
+            background: #f5f5f5;
         }
-        .upload-item .filename {
+
+        .upload-item-info {
             flex: 1;
-            font-size: 0.875rem;
+            min-width: 0;
+        }
+
+        .upload-item-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .upload-item-status {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .upload-item-status.success { color: #22c55e; }
+        .upload-item-status.error { color: #ef4444; }
+
+        /* ========== Browse Section ========== */
+        .browse-section {
+            display: none;
+        }
+
+        .browse-section.active {
+            display: block;
+        }
+
+        .browse-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .browse-stats {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .browse-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-sm:hover {
+            border-color: #999;
+            color: #1a1a1a;
+        }
+
+        /* ========== Folder Tree ========== */
+        .folder-tree {
+            margin-bottom: 24px;
+        }
+
+        .folder-item {
+            margin-bottom: 8px;
+        }
+
+        .folder-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .folder-header:hover {
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+
+        .folder-arrow {
+            width: 16px;
+            height: 16px;
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        .folder-item.open > .folder-header .folder-arrow {
+            transform: rotate(90deg);
+        }
+
+        .folder-icon {
+            color: #f59e0b;
+        }
+
+        .folder-count {
+            background: #f5f5f5;
+            color: #666;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 400;
+        }
+
+        .folder-children {
+            display: none;
+            margin-left: 24px;
+            padding-left: 16px;
+            border-left: 1px solid #eee;
+            margin-top: 8px;
+        }
+
+        .folder-item.open > .folder-children {
+            display: block;
+        }
+
+        /* ========== Image Grid ========== */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+            margin-bottom: 24px;
+        }
+
+        .image-card {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+
+        .image-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .image-thumb {
+            aspect-ratio: 4/3;
+            background: #f5f5f5;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .image-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .image-card:hover .image-thumb img {
+            transform: scale(1.03);
+        }
+
+        .image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .overlay-btn {
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a1a;
+            transition: all 0.15s;
+        }
+
+        .overlay-btn:hover {
+            background: #f5f5f5;
+            transform: scale(1.05);
+        }
+
+        .overlay-btn.danger:hover {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .image-info {
+            padding: 12px;
+        }
+
+        .image-name {
+            font-size: 13px;
+            font-weight: 500;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
         }
-        .upload-item .status {
-            font-size: 0.75rem;
-            color: #64748b;
+
+        .image-meta {
+            font-size: 12px;
+            color: #999;
         }
-        .upload-item .status.success { color: #10b981; }
-        .upload-item .status.error { color: #ef4444; }
+
+        /* ========== Empty State ========== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            color: #ddd;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ========== Modal ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .form-hint a {
+            color: #1a1a1a;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .btn-primary {
+            background: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #333;
+        }
+
+        .btn-danger {
+            background: #fff;
+            border: 1px solid #fecaca;
+            color: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: #fef2f2;
+        }
+
+        /* ========== Toast ========== */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.2s ease;
+        }
+
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ========== Alert ========== */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            color: #a16207;
+        }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 768px) {
+            .header-inner {
+                padding: 0 16px;
+            }
+
+            .main {
+                padding: 16px;
+            }
+
+            .nav-btn span {
+                display: none;
+            }
+
+            .config-row {
+                flex-direction: column;
+            }
+
+            .config-field {
+                width: 100%;
+            }
+
+            .upload-zone {
+                padding: 40px 20px;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+
+            .browse-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .modal {
+                margin: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .image-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .image-info {
+                padding: 8px;
+            }
+
+            .image-name {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header d-flex justify-content-between align-items-center">
-            <h1>🖼️ Image Bed</h1>
-            <div>
-                <button class="btn btn-sm btn-light" onclick="showSettings()">⚙️ 設定</button>
-            </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="#" class="logo">
+                <span class="logo-icon">IB</span>
+                <span>Image Bed</span>
+            </a>
+            <nav class="nav">
+                <button class="nav-btn active" data-tab="browse">
+                    <span>瀏覽</span>
+                </button>
+                <button class="nav-btn" data-tab="upload">
+                    <span>上傳</span>
+                </button>
+                <button class="btn-icon" onclick="showSettings()" title="設定">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </nav>
         </div>
+    </header>
 
-        <!-- Tabs -->
-        <ul class="nav nav-tabs mb-4" id="mainTabs">
-            <li class="nav-item">
-                <a class="nav-link active" href="#" data-tab="browse">📂 瀏覽圖片</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-tab="upload">📤 上傳圖片</a>
-            </li>
-        </ul>
-
-        <!-- Browse Tab -->
-        <div id="browseTab">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="toggleAll(true)">全部展開</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleAll(false)">全部折疊</button>
+    <!-- Main -->
+    <main class="main">
+        <!-- Browse Section -->
+        <section class="browse-section active" id="browseSection">
+            <div class="browse-toolbar">
+                <div class="browse-stats">
+                    共 <strong id="totalCount">0</strong> 張圖片
                 </div>
-                <div class="text-muted small">
-                    共 <span id="totalCount">0</span> 張圖片
+                <div class="browse-actions">
+                    <button class="btn-sm" onclick="toggleAll(true)">全部展開</button>
+                    <button class="btn-sm" onclick="toggleAll(false)">全部折疊</button>
                 </div>
             </div>
             <div id="gallery"></div>
-        </div>
+        </section>
 
-        <!-- Upload Tab -->
-        <div id="uploadTab" style="display: none;">
-            <!-- Token Warning -->
-            <div id="tokenWarning" class="alert alert-warning" style="display: none;">
-                ⚠️ 請先到「設定」頁面輸入 GitHub Token 才能上傳圖片
+        <!-- Upload Section -->
+        <section class="upload-section" id="uploadSection">
+            <div class="upload-header">
+                <h2>上傳圖片</h2>
+                <p>圖片將存放在 GitHub Releases，不佔用 repo 空間</p>
             </div>
 
-            <!-- Folder Selection -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">📁 目標資料夾</label>
-                <div class="d-flex gap-2">
-                    <input type="text" class="form-control folder-input" id="uploadFolder"
-                           placeholder="例如: Blog/Tech" value="">
-                    <select class="form-select folder-input" id="folderSelect" onchange="selectFolder(this.value)">
-                        <option value="">-- 選擇現有資料夾 --</option>
-                    </select>
-                </div>
-                <div class="form-text">留空則放在根目錄</div>
+            <div id="tokenAlert" class="alert alert-warning" style="display: none;">
+                請先點擊右上角設定按鈕，輸入 GitHub Token 才能上傳
             </div>
 
-            <!-- Upload Area -->
-            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                <div class="upload-icon">📁</div>
-                <h5>拖放圖片到這裡</h5>
-                <p class="text-muted mb-2">或點擊選擇檔案</p>
-                <p class="text-muted small">支援 JPG, PNG, GIF, WebP (單檔最大 2GB)</p>
-                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
-            </div>
-
-            <!-- Upload Progress -->
-            <div id="uploadProgress" class="upload-progress"></div>
-        </div>
-
-        <!-- Settings Modal -->
-        <div class="modal fade" id="settingsModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">⚙️ 設定</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="upload-config">
+                <div class="config-row">
+                    <div class="config-field">
+                        <label>目標資料夾</label>
+                        <input type="text" id="uploadFolder" placeholder="例如: Blog/Tech（留空為根目錄）">
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">GitHub Personal Access Token</label>
-                            <input type="password" class="form-control" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
-                            <div class="form-text">
-                                需要 <code>repo</code> 權限。
-                                <a href="https://github.com/settings/tokens/new?scopes=repo&description=image-bed" target="_blank">點此建立 Token</a>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Repository</label>
-                            <input type="text" class="form-control" id="repoInput" placeholder="username/image-bed">
-                            <div class="form-text">格式: owner/repo</div>
-                        </div>
-                        <div class="alert alert-info small">
-                            💡 Token 只存在你的瀏覽器 localStorage，不會上傳到任何地方
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-danger" onclick="clearSettings()">清除設定</button>
-                        <button type="button" class="btn btn-primary" onclick="saveSettings()">儲存</button>
+                    <div class="config-field">
+                        <label>選擇現有資料夾</label>
+                        <select id="folderSelect" onchange="document.getElementById('uploadFolder').value = this.value">
+                            <option value="">-- 選擇 --</option>
+                        </select>
                     </div>
                 </div>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <h3>拖放圖片到這裡上傳</h3>
+                <p>或點擊選擇檔案・支援 JPG, PNG, GIF, WebP</p>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+            </div>
+
+            <div class="upload-list" id="uploadList"></div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>設定</h3>
+                <button class="modal-close" onclick="closeSettings()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>GitHub Personal Access Token</label>
+                    <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx">
+                    <p class="form-hint">
+                        需要 repo 權限。<a href="https://github.com/settings/tokens/new?scopes=repo&description=image-bed" target="_blank">點此建立 Token</a>
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>Repository</label>
+                    <input type="text" id="repoInput" placeholder="username/image-bed">
+                    <p class="form-hint">格式: owner/repo-name</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="clearSettings()">清除</button>
+                <button class="btn btn-primary" onclick="saveSettings()">儲存</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Container -->
-    <div class="toast-container"></div>
+    <div class="toast-container" id="toastContainer"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ========== Configuration ==========
+        // ========== Config ==========
         const CONFIG = {
             RELEASE_TAG: 'images',
             INDEX_FILE: 'index.json'
@@ -318,20 +879,15 @@
 
         // ========== State ==========
         let images = [];
-        let settings = {
-            token: '',
-            repo: ''
-        };
+        let settings = { token: '', repo: '' };
 
-        // ========== Initialize ==========
+        // ========== Init ==========
         document.addEventListener('DOMContentLoaded', async () => {
             loadSettings();
             setupTabs();
-            setupDragDrop();
+            setupUpload();
             await loadImages();
-            renderGallery();
-            updateFolderSelect();
-            checkToken();
+            render();
         });
 
         // ========== Settings ==========
@@ -342,26 +898,33 @@
                 document.getElementById('tokenInput').value = settings.token || '';
                 document.getElementById('repoInput').value = settings.repo || '';
             }
-
-            // Auto-detect repo from URL if on GitHub Pages
+            // Auto-detect repo
             if (!settings.repo) {
-                const match = window.location.hostname.match(/^(.+)\.github\.io$/);
+                const match = location.hostname.match(/^(.+)\.github\.io$/);
                 if (match) {
-                    const pathParts = window.location.pathname.split('/').filter(Boolean);
-                    if (pathParts.length > 0) {
-                        settings.repo = `${match[1]}/${pathParts[0]}`;
+                    const path = location.pathname.split('/').filter(Boolean)[0];
+                    if (path) {
+                        settings.repo = `${match[1]}/${path}`;
                         document.getElementById('repoInput').value = settings.repo;
                     }
                 }
             }
         }
 
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
         function saveSettings() {
             settings.token = document.getElementById('tokenInput').value.trim();
             settings.repo = document.getElementById('repoInput').value.trim();
             localStorage.setItem('image-bed-settings', JSON.stringify(settings));
-            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
-            showToast('設定已儲存', 'success');
+            closeSettings();
+            toast('設定已儲存', 'success');
             checkToken();
         }
 
@@ -370,272 +933,97 @@
             settings = { token: '', repo: '' };
             document.getElementById('tokenInput').value = '';
             document.getElementById('repoInput').value = '';
-            showToast('設定已清除', 'info');
+            toast('設定已清除');
             checkToken();
         }
 
-        function showSettings() {
-            new bootstrap.Modal(document.getElementById('settingsModal')).show();
-        }
-
         function checkToken() {
-            const warning = document.getElementById('tokenWarning');
-            if (!settings.token || !settings.repo) {
-                warning.style.display = 'block';
-            } else {
-                warning.style.display = 'none';
-            }
+            const alert = document.getElementById('tokenAlert');
+            alert.style.display = (!settings.token || !settings.repo) ? 'block' : 'none';
         }
 
         // ========== Tabs ==========
         function setupTabs() {
-            document.querySelectorAll('[data-tab]').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const tabName = e.target.dataset.tab;
-
-                    document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-
-                    document.getElementById('browseTab').style.display = tabName === 'browse' ? 'block' : 'none';
-                    document.getElementById('uploadTab').style.display = tabName === 'upload' ? 'block' : 'none';
+            document.querySelectorAll('[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('browseSection').classList.toggle('active', tab === 'browse');
+                    document.getElementById('uploadSection').classList.toggle('active', tab === 'upload');
+                    if (tab === 'upload') checkToken();
                 });
             });
-        }
-
-        // ========== Drag & Drop ==========
-        function setupDragDrop() {
-            const uploadArea = document.getElementById('uploadArea');
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-            });
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'));
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'));
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                handleFiles(files);
-            });
-        }
-
-        // ========== Load Images ==========
-        async function loadImages() {
-            try {
-                // Try to load from the same origin first
-                const response = await fetch(CONFIG.INDEX_FILE);
-                if (response.ok) {
-                    const data = await response.json();
-                    images = data.images || [];
-                }
-            } catch (err) {
-                console.log('No index.json found, starting fresh');
-                images = [];
-            }
-        }
-
-        // ========== Render Gallery ==========
-        function renderGallery() {
-            const gallery = document.getElementById('gallery');
-            document.getElementById('totalCount').textContent = images.length;
-
-            if (images.length === 0) {
-                gallery.innerHTML = `
-                    <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <h5>還沒有圖片</h5>
-                        <p>點擊「上傳圖片」開始使用</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Build tree structure
-            const tree = buildTree(images);
-            gallery.innerHTML = renderTree(tree, '');
-        }
-
-        function buildTree(images) {
-            const tree = { files: [], subdirs: {} };
-
-            images.forEach(img => {
-                const folder = img.folder || '';
-                if (!folder) {
-                    tree.files.push(img);
-                } else {
-                    const parts = folder.split('/');
-                    let current = tree;
-                    parts.forEach(part => {
-                        if (!current.subdirs[part]) {
-                            current.subdirs[part] = { files: [], subdirs: {} };
-                        }
-                        current = current.subdirs[part];
-                    });
-                    current.files.push(img);
-                }
-            });
-
-            return tree;
-        }
-
-        function countImages(node) {
-            let count = node.files.length;
-            for (const sub of Object.values(node.subdirs)) {
-                count += countImages(sub);
-            }
-            return count;
-        }
-
-        function renderTree(node, currentPath) {
-            let html = '';
-
-            // Render subdirectories first
-            const sortedDirs = Object.keys(node.subdirs).sort();
-            for (const dirname of sortedDirs) {
-                const subNode = node.subdirs[dirname];
-                const newPath = currentPath ? `${currentPath}/${dirname}` : dirname;
-                const totalImgs = countImages(subNode);
-
-                if (totalImgs > 0) {
-                    html += `
-                        <details class="folder-section" open>
-                            <summary>📁 ${dirname} <span class="badge rounded-pill bg-secondary ms-2">${totalImgs}</span></summary>
-                            <div class="nested-content">
-                                ${renderTree(subNode, newPath)}
-                            </div>
-                        </details>
-                    `;
-                }
-            }
-
-            // Render files
-            if (node.files.length > 0) {
-                html += '<div class="row g-3 mt-1 mb-3">';
-                for (const img of node.files) {
-                    const url = getImageUrl(img);
-                    const mdCode = `![${img.filename}](${url})`;
-                    html += `
-                        <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                            <div class="card h-100 shadow-sm">
-                                <div class="img-container" onclick="window.open('${url}')">
-                                    <img src="${url}" class="img-preview" alt="${img.filename}" loading="lazy">
-                                </div>
-                                <div class="card-body p-2">
-                                    <p class="card-text text-truncate small mb-2" title="${img.filename}">${img.filename}</p>
-                                    <div class="d-grid gap-1">
-                                        <button class="btn btn-xs btn-outline-primary" onclick="copyText('${url}', this)">複製連結</button>
-                                        <button class="btn btn-xs btn-outline-secondary" onclick="copyText('${mdCode.replace(/'/g, "\\'")}', this)">複製 MD</button>
-                                        <button class="btn btn-xs btn-outline-danger" onclick="deleteImage('${img.id}')">刪除</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                html += '</div>';
-            }
-
-            return html;
-        }
-
-        function getImageUrl(img) {
-            if (!settings.repo) return '';
-            return `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${img.id}_${encodeURIComponent(img.filename)}`;
-        }
-
-        // ========== Folder Selection ==========
-        function updateFolderSelect() {
-            const select = document.getElementById('folderSelect');
-            const folders = new Set();
-
-            images.forEach(img => {
-                if (img.folder) {
-                    const parts = img.folder.split('/');
-                    let path = '';
-                    parts.forEach(part => {
-                        path = path ? `${path}/${part}` : part;
-                        folders.add(path);
-                    });
-                }
-            });
-
-            select.innerHTML = '<option value="">-- 選擇現有資料夾 --</option>';
-            [...folders].sort().forEach(folder => {
-                select.innerHTML += `<option value="${folder}">${folder}</option>`;
-            });
-        }
-
-        function selectFolder(value) {
-            document.getElementById('uploadFolder').value = value;
         }
 
         // ========== Upload ==========
+        function setupUpload() {
+            const zone = document.getElementById('uploadZone');
+            const input = document.getElementById('fileInput');
+
+            zone.addEventListener('click', () => input.click());
+            input.addEventListener('change', e => handleFiles(e.target.files));
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+                zone.addEventListener(event, e => { e.preventDefault(); e.stopPropagation(); });
+            });
+            ['dragenter', 'dragover'].forEach(event => {
+                zone.addEventListener(event, () => zone.classList.add('dragover'));
+            });
+            ['dragleave', 'drop'].forEach(event => {
+                zone.addEventListener(event, () => zone.classList.remove('dragover'));
+            });
+            zone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+        }
+
         async function handleFiles(files) {
             if (!settings.token || !settings.repo) {
-                showToast('請先設定 GitHub Token 和 Repository', 'error');
+                toast('請先設定 GitHub Token', 'error');
                 showSettings();
                 return;
             }
 
             const folder = document.getElementById('uploadFolder').value.trim();
-            const progressContainer = document.getElementById('uploadProgress');
-            progressContainer.innerHTML = '';
+            const list = document.getElementById('uploadList');
 
             for (const file of files) {
-                if (!file.type.startsWith('image/')) {
-                    showToast(`${file.name} 不是圖片檔案`, 'error');
-                    continue;
-                }
+                if (!file.type.startsWith('image/')) continue;
 
-                const itemId = 'upload-' + Date.now() + Math.random().toString(36).substr(2, 9);
-                const previewUrl = URL.createObjectURL(file);
+                const id = 'u' + Date.now() + Math.random().toString(36).substr(2, 5);
+                const preview = URL.createObjectURL(file);
 
-                progressContainer.innerHTML += `
-                    <div class="upload-item" id="${itemId}">
-                        <img src="${previewUrl}" alt="">
-                        <span class="filename">${file.name}</span>
-                        <span class="status">上傳中...</span>
+                list.innerHTML += `
+                    <div class="upload-item" id="${id}">
+                        <img class="upload-item-thumb" src="${preview}">
+                        <div class="upload-item-info">
+                            <div class="upload-item-name">${file.name}</div>
+                            <div class="upload-item-status" id="${id}-status">上傳中...</div>
+                        </div>
                     </div>
                 `;
 
                 try {
-                    await uploadFile(file, folder, itemId);
+                    await uploadFile(file, folder, id);
                 } catch (err) {
-                    console.error('Upload error:', err);
-                    updateUploadStatus(itemId, '失敗: ' + err.message, 'error');
+                    setStatus(id, '失敗: ' + err.message, 'error');
                 }
             }
 
-            // Refresh gallery
             await loadImages();
-            renderGallery();
-            updateFolderSelect();
+            render();
         }
 
         async function uploadFile(file, folder, itemId) {
             const id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
             const assetName = `${id}_${file.name}`;
 
-            // 1. Ensure release exists
+            // Ensure release
             const releaseId = await ensureRelease();
 
-            // 2. Upload file as release asset
-            updateUploadStatus(itemId, '上傳檔案中...', '');
-
+            // Upload
+            setStatus(itemId, '上傳中...');
             const uploadUrl = `https://uploads.github.com/repos/${settings.repo}/releases/${releaseId}/assets?name=${encodeURIComponent(assetName)}`;
-
-            const uploadRes = await fetch(uploadUrl, {
+            const res = await fetch(uploadUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `token ${settings.token}`,
@@ -644,41 +1032,29 @@
                 body: file
             });
 
-            if (!uploadRes.ok) {
-                const err = await uploadRes.json();
-                throw new Error(err.message || 'Upload failed');
-            }
+            if (!res.ok) throw new Error((await res.json()).message || 'Upload failed');
 
-            // 3. Update index.json
-            updateUploadStatus(itemId, '更新索引中...', '');
-
-            const newImage = {
+            // Update index
+            setStatus(itemId, '更新索引...');
+            images.push({
                 id,
                 filename: file.name,
                 folder: folder || '',
                 size: file.size,
                 uploadedAt: new Date().toISOString()
-            };
-
-            images.push(newImage);
+            });
             await saveIndex();
 
-            updateUploadStatus(itemId, '完成 ✓', 'success');
+            setStatus(itemId, '完成', 'success');
         }
 
         async function ensureRelease() {
-            // Check if release exists
             const res = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
                 headers: { 'Authorization': `token ${settings.token}` }
             });
+            if (res.ok) return (await res.json()).id;
 
-            if (res.ok) {
-                const release = await res.json();
-                return release.id;
-            }
-
-            // Create release
-            const createRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases`, {
+            const create = await fetch(`https://api.github.com/repos/${settings.repo}/releases`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `token ${settings.token}`,
@@ -687,36 +1063,25 @@
                 body: JSON.stringify({
                     tag_name: CONFIG.RELEASE_TAG,
                     name: 'Image Storage',
-                    body: 'Auto-created release for image storage'
+                    body: 'Auto-created for image storage'
                 })
             });
-
-            if (!createRes.ok) {
-                throw new Error('Failed to create release');
-            }
-
-            const release = await createRes.json();
-            return release.id;
+            if (!create.ok) throw new Error('Failed to create release');
+            return (await create.json()).id;
         }
 
         async function saveIndex() {
-            const content = JSON.stringify({ images }, null, 2);
-            const base64Content = btoa(unescape(encodeURIComponent(content)));
-
-            // Get current file SHA if exists
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify({ images }, null, 2))));
             let sha = null;
+
             try {
                 const res = await fetch(`https://api.github.com/repos/${settings.repo}/contents/${CONFIG.INDEX_FILE}`, {
                     headers: { 'Authorization': `token ${settings.token}` }
                 });
-                if (res.ok) {
-                    const data = await res.json();
-                    sha = data.sha;
-                }
+                if (res.ok) sha = (await res.json()).sha;
             } catch (e) {}
 
-            // Update file
-            const updateRes = await fetch(`https://api.github.com/repos/${settings.repo}/contents/${CONFIG.INDEX_FILE}`, {
+            await fetch(`https://api.github.com/repos/${settings.repo}/contents/${CONFIG.INDEX_FILE}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${settings.token}`,
@@ -724,30 +1089,181 @@
                 },
                 body: JSON.stringify({
                     message: 'Update image index',
-                    content: base64Content,
+                    content,
                     ...(sha && { sha })
                 })
             });
+        }
 
-            if (!updateRes.ok) {
-                throw new Error('Failed to update index');
+        function setStatus(id, text, type = '') {
+            const el = document.getElementById(id + '-status');
+            if (el) {
+                el.textContent = text;
+                el.className = 'upload-item-status ' + type;
             }
         }
 
-        function updateUploadStatus(itemId, text, status) {
-            const item = document.getElementById(itemId);
-            if (item) {
-                const statusEl = item.querySelector('.status');
-                statusEl.textContent = text;
-                statusEl.className = 'status ' + status;
+        // ========== Load & Render ==========
+        async function loadImages() {
+            try {
+                const res = await fetch(CONFIG.INDEX_FILE + '?t=' + Date.now());
+                if (res.ok) images = (await res.json()).images || [];
+            } catch (e) {
+                images = [];
             }
         }
 
-        // ========== Delete ==========
+        function render() {
+            document.getElementById('totalCount').textContent = images.length;
+            updateFolderSelect();
+
+            const gallery = document.getElementById('gallery');
+            if (images.length === 0) {
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21,15 16,10 5,21"></polyline>
+                        </svg>
+                        <h3>還沒有圖片</h3>
+                        <p>點擊上方「上傳」開始使用</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const tree = buildTree();
+            gallery.innerHTML = renderTree(tree, '');
+        }
+
+        function buildTree() {
+            const tree = { files: [], subdirs: {} };
+            images.forEach(img => {
+                const folder = img.folder || '';
+                if (!folder) {
+                    tree.files.push(img);
+                } else {
+                    let current = tree;
+                    folder.split('/').forEach(part => {
+                        if (!current.subdirs[part]) current.subdirs[part] = { files: [], subdirs: {} };
+                        current = current.subdirs[part];
+                    });
+                    current.files.push(img);
+                }
+            });
+            return tree;
+        }
+
+        function countImages(node) {
+            return node.files.length + Object.values(node.subdirs).reduce((sum, n) => sum + countImages(n), 0);
+        }
+
+        function renderTree(node, path) {
+            let html = '';
+
+            // Folders
+            Object.keys(node.subdirs).sort().forEach(name => {
+                const sub = node.subdirs[name];
+                const newPath = path ? `${path}/${name}` : name;
+                const count = countImages(sub);
+                if (count > 0) {
+                    html += `
+                        <div class="folder-item open">
+                            <div class="folder-header" onclick="this.parentElement.classList.toggle('open')">
+                                <svg class="folder-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9,18 15,12 9,6"></polyline>
+                                </svg>
+                                <span class="folder-icon">📁</span>
+                                <span>${name}</span>
+                                <span class="folder-count">${count}</span>
+                            </div>
+                            <div class="folder-children">
+                                ${renderTree(sub, newPath)}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Images
+            if (node.files.length > 0) {
+                html += '<div class="image-grid">';
+                node.files.forEach(img => {
+                    const url = getImageUrl(img);
+                    html += `
+                        <div class="image-card">
+                            <div class="image-thumb" onclick="window.open('${url}')">
+                                <img src="${url}" alt="${img.filename}" loading="lazy">
+                                <div class="image-overlay">
+                                    <button class="overlay-btn" onclick="event.stopPropagation(); copyUrl('${url}')" title="複製連結">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="overlay-btn" onclick="event.stopPropagation(); copyMd('${img.filename}', '${url}')" title="複製 Markdown">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14,2 14,8 20,8"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="overlay-btn danger" onclick="event.stopPropagation(); deleteImage('${img.id}')" title="刪除">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3,6 5,6 21,6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="image-info">
+                                <div class="image-name" title="${img.filename}">${img.filename}</div>
+                                <div class="image-meta">${formatSize(img.size)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        function getImageUrl(img) {
+            return `https://github.com/${settings.repo}/releases/download/${CONFIG.RELEASE_TAG}/${img.id}_${encodeURIComponent(img.filename)}`;
+        }
+
+        function updateFolderSelect() {
+            const select = document.getElementById('folderSelect');
+            const folders = new Set();
+            images.forEach(img => {
+                if (img.folder) {
+                    let path = '';
+                    img.folder.split('/').forEach(part => {
+                        path = path ? `${path}/${part}` : part;
+                        folders.add(path);
+                    });
+                }
+            });
+            select.innerHTML = '<option value="">-- 選擇 --</option>' +
+                [...folders].sort().map(f => `<option value="${f}">${f}</option>`).join('');
+        }
+
+        // ========== Actions ==========
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url);
+            toast('連結已複製', 'success');
+        }
+
+        function copyMd(name, url) {
+            navigator.clipboard.writeText(`![${name}](${url})`);
+            toast('Markdown 已複製', 'success');
+        }
+
         async function deleteImage(id) {
-            if (!confirm('確定要刪除這張圖片嗎？')) return;
-            if (!settings.token || !settings.repo) {
-                showToast('請先設定 GitHub Token', 'error');
+            if (!confirm('確定要刪除嗎？')) return;
+            if (!settings.token) {
+                toast('請先設定 Token', 'error');
                 return;
             }
 
@@ -755,16 +1271,13 @@
                 const img = images.find(i => i.id === id);
                 if (!img) return;
 
-                // 1. Delete release asset
+                // Delete asset
                 const releaseRes = await fetch(`https://api.github.com/repos/${settings.repo}/releases/tags/${CONFIG.RELEASE_TAG}`, {
                     headers: { 'Authorization': `token ${settings.token}` }
                 });
-
                 if (releaseRes.ok) {
                     const release = await releaseRes.json();
-                    const assetName = `${img.id}_${img.filename}`;
-                    const asset = release.assets.find(a => a.name === assetName);
-
+                    const asset = release.assets.find(a => a.name === `${img.id}_${img.filename}`);
                     if (asset) {
                         await fetch(`https://api.github.com/repos/${settings.repo}/releases/assets/${asset.id}`, {
                             method: 'DELETE',
@@ -773,71 +1286,48 @@
                     }
                 }
 
-                // 2. Update index
+                // Update index
                 images = images.filter(i => i.id !== id);
                 await saveIndex();
 
-                showToast('圖片已刪除', 'success');
-                renderGallery();
-                updateFolderSelect();
+                toast('已刪除', 'success');
+                render();
             } catch (err) {
-                console.error('Delete error:', err);
-                showToast('刪除失敗: ' + err.message, 'error');
+                toast('刪除失敗', 'error');
             }
         }
 
-        // ========== Utilities ==========
         function toggleAll(expand) {
-            document.querySelectorAll('details').forEach(d => {
-                if (expand) d.setAttribute('open', '');
-                else d.removeAttribute('open');
+            document.querySelectorAll('.folder-item').forEach(el => {
+                el.classList.toggle('open', expand);
             });
         }
 
-        function copyText(text, btn) {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = '已複製 ✓';
-                btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
-                btn.classList.add('btn-success');
-
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.remove('btn-success');
-                    if (originalText.includes('MD')) {
-                        btn.classList.add('btn-outline-secondary');
-                    } else {
-                        btn.classList.add('btn-outline-primary');
-                    }
-                }, 1500);
-            });
+        // ========== Utils ==========
+        function formatSize(bytes) {
+            if (!bytes) return '';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            while (bytes >= 1024 && i < units.length - 1) {
+                bytes /= 1024;
+                i++;
+            }
+            return bytes.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.querySelector('.toast-container');
-            const id = 'toast-' + Date.now();
-
-            const bgClass = {
-                'success': 'bg-success',
-                'error': 'bg-danger',
-                'info': 'bg-primary'
-            }[type] || 'bg-primary';
-
-            container.innerHTML += `
-                <div id="${id}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">${message}</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>
-            `;
-
-            const toastEl = document.getElementById(id);
-            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-            toast.show();
-
-            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        function toast(msg, type = '') {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast ' + type;
+            el.textContent = msg;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
         }
+
+        // Close modal on overlay click
+        document.getElementById('settingsModal').addEventListener('click', e => {
+            if (e.target.classList.contains('modal-overlay')) closeSettings();
+        });
     </script>
 </body>
 </html>
