@@ -1411,6 +1411,10 @@
                 const release = await releaseRes.json();
                 const assetName = `${img.id}_${img.filename}`;
 
+                // Debug
+                console.log('Looking for:', assetName);
+                console.log('Release assets:', release.assets?.map(a => a.name) || 'none');
+
                 // 嘗試精確匹配，失敗則嘗試以 id 開頭匹配
                 let asset = release.assets.find(a => a.name === assetName);
                 if (!asset) {
